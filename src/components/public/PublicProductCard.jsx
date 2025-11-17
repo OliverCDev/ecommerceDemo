@@ -15,7 +15,7 @@ const PublicProductCard = ({ product, onAddToCart, onToggleFavorite, isFavorite 
         <img  
           className="w-full h-48 object-cover" 
           alt={`${product.name} - Producto de ${product.category}`}
-         src={`${product.imageUrl}`} />
+         src={`${product.image_url}`} />
         
         <div className="absolute top-3 left-3 flex space-x-2">
           {product.featured && (
