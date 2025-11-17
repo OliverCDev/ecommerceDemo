@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+
 import ClientHeader from '@/components/client/ClientHeader';
 import ProductsView from '@/components/client/ProductsView';
 import OrdersView from '@/components/client/OrdersView';
 import CartSidebar from '@/components/client/CartSidebar';
+
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
 import { toast } from '@/components/ui/use-toast';
@@ -13,16 +16,30 @@ import { toast } from '@/components/ui/use-toast';
 const ClientApp = () => {
   const { user, profile, logout } = useAuth();
   const { products, categories, createOrder, getOrdersByCustomer, loading: dataLoading } = useData();
+
+  // =============================
+  // ✅ PASO 5: currentView persistente
+  // =============================
+  const [currentView, setCurrentView] = useState(
+    () => localStorage.getItem('client_current_view') || 'products'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('client_current_view', currentView);
+  }, [currentView]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [showCart, setShowCart] = useState(false);
-  const [currentView, setCurrentView] = useState('products');
   const [userOrders, setUserOrders] = useState([]);
   const [isOrdersLoading, setIsOrdersLoading] = useState(false);
 
-  const { cart, addToCart, removeFromCart, updateQuantity, getTotalPrice, getTotalItems, clearCart } = useCart(user?.id);
+  const { cart, addToCart, removeFromCart, updateQuantity, getTotalPrice, getTotalItems, clearCart } =
+    useCart(user?.id);
+
   const { favorites, toggleFavorite } = useFavorites(user?.id);
 
+  // Obtener pedidos del usuario
   const fetchUserOrders = useCallback(async () => {
     if (user?.id) {
       setIsOrdersLoading(true);
@@ -40,11 +57,20 @@ const ClientApp = () => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      toast({ title: "Carrito vacío", description: "Agrega productos a tu carrito antes de proceder.", variant: "destructive" });
+      toast({
+        title: "Carrito vacío",
+        description: "Agrega productos antes de proceder.",
+        variant: "destructive",
+      });
       return;
     }
+
     if (!user || !profile) {
-      toast({ title: "Error", description: "No se pudo identificar al usuario.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "No se pudo identificar al usuario.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -52,22 +78,24 @@ const ClientApp = () => {
       customerId: user.id,
       items: cart,
       total: getTotalPrice(),
-      shippingAddress: { 
+      shippingAddress: {
         street: profile.address?.street || "123 Calle Falsa",
         city: profile.address?.city || "Ciudad Ejemplo",
         zip: profile.address?.zip || "00000",
-      }
+      },
     };
 
     const newOrder = await createOrder(orderData);
+
     if (newOrder) {
       clearCart();
       setShowCart(false);
-      await fetchUserOrders(); 
-      setCurrentView('orders'); 
+      await fetchUserOrders();
+      setCurrentView('orders'); // 👈 Mantener vista
     }
   };
-  
+
+  // Loader principal del cliente
   if (dataLoading && products.length === 0 && categories.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -83,7 +111,7 @@ const ClientApp = () => {
     <div className="min-h-screen bg-gray-50">
       <ClientHeader
         user={{ ...user, name: displayName }}
-        logout={logout} 
+        logout={logout}
         currentView={currentView}
         setCurrentView={setCurrentView}
         searchTerm={searchTerm}
@@ -107,9 +135,9 @@ const ClientApp = () => {
             isLoading={dataLoading && products.length === 0}
           />
         ) : (
-          <OrdersView 
-            userOrders={userOrders} 
-            setCurrentView={setCurrentView} 
+          <OrdersView
+            userOrders={userOrders}
+            setCurrentView={setCurrentView}
             isLoading={isOrdersLoading}
           />
         )}

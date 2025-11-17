@@ -35,7 +35,7 @@ const ProductCard = ({ product, addToCart, toggleFavorite, isFavorite }) => {
         <img   
           className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105" 
           alt={`${product.name} - ${product.description}`}
-         src="https://images.unsplash.com/photo-1671376354106-d8d21e55dddd" />
+         src={`${product.imageUrl}`} />
         
         <button
           onClick={handleToggleFavorite}

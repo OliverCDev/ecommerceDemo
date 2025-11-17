@@ -191,7 +191,7 @@ const AdminProducts = () => {
             <img  
               className="w-full h-48 object-cover" 
               alt={`${product.name} - producto en tienda`}
-             src="https://images.unsplash.com/photo-1675825547463-0788eca2320e" />
+             src={`${product.imageUrl}`} />
             
             <div className="p-4">
               <h3 className="font-semibold text-lg mb-2">{product.name}</h3>

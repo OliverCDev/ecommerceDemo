@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Package, Users, ShoppingBag, UserPlus, Settings, Tag, Loader2 } from 'lucide-react';
+import { Package, Users, ShoppingBag, UserPlus, Tag, Loader2 } from 'lucide-react';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import ProductsManagement from '@/components/admin/ProductsManagement';
@@ -19,7 +21,18 @@ const AdminApp = () => {
     fetchOrders, 
     fetchCustomers 
   } = useData();
-  const [currentView, setCurrentView] = useState('dashboard');
+
+  // =============================
+  // ✅ PASO 4: currentView persistente
+  // =============================
+  const [currentView, setCurrentView] = useState(
+    () => localStorage.getItem('admin_current_view') || 'dashboard'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('admin_current_view', currentView);
+  }, [currentView]);
+
   const [appContentLoading, setAppContentLoading] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [triggerOpenModal, setTriggerOpenModal] = useState(null);
@@ -34,7 +47,7 @@ const AdminApp = () => {
           fetchOrders(),
           fetchCustomers()
         ]);
-        setInitialLoadComplete(true); 
+        setInitialLoadComplete(true);
       } catch (error) {
         console.error("Error loading initial admin data:", error);
       } finally {
@@ -44,17 +57,27 @@ const AdminApp = () => {
       setAppContentLoading(false);
       setInitialLoadComplete(true);
     } else if (!profile && !user && !dataContextLoading) {
-       setAppContentLoading(false);
-       setInitialLoadComplete(true);
+      setAppContentLoading(false);
+      setInitialLoadComplete(true);
     }
-  }, [profile, user, dataContextLoading, fetchProducts, fetchCategories, fetchOrders, fetchCustomers, initialLoadComplete]);
-  
+  }, [
+    profile,
+    user,
+    dataContextLoading,
+    fetchProducts,
+    fetchCategories,
+    fetchOrders,
+    fetchCustomers,
+    initialLoadComplete,
+  ]);
+
   useEffect(() => {
     if (!dataContextLoading) {
-        loadInitialAdminData();
+      loadInitialAdminData();
     }
   }, [dataContextLoading, loadInitialAdminData]);
 
+  // Menú lateral
   const menuItems = [
     { id: 'dashboard', name: 'Dashboard', icon: Package },
     { id: 'products', name: 'Productos', icon: Package },
@@ -73,13 +96,14 @@ const AdminApp = () => {
     setTriggerOpenModal(null);
   };
 
-
   const renderContent = () => {
-    if (appContentLoading || dataContextLoading && !initialLoadComplete) {
+    if (appContentLoading || (dataContextLoading && !initialLoadComplete)) {
       return (
         <div className="flex flex-col items-center justify-center h-full p-10">
           <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-6" />
-          <p className="text-xl font-semibold text-gray-700">Cargando datos del panel...</p>
+          <p className="text-xl font-semibold text-gray-700">
+            Cargando datos del panel...
+          </p>
           <p className="text-gray-500">Esto puede tardar unos segundos.</p>
         </div>
       );
@@ -89,48 +113,55 @@ const AdminApp = () => {
       case 'dashboard':
         return <AdminDashboard setCurrentView={handleSetCurrentView} />;
       case 'products':
-        return <ProductsManagement openFormModal={triggerOpenModal === 'addProduct'} onModalOpenHandled={resetTriggerModal} />;
+        return (
+          <ProductsManagement
+            openFormModal={triggerOpenModal === 'addProduct'}
+            onModalOpenHandled={resetTriggerModal}
+          />
+        );
       case 'categories':
-        return <CategoriesManagement openFormModal={triggerOpenModal === 'addCategory'} onModalOpenHandled={resetTriggerModal} />;
+        return (
+          <CategoriesManagement
+            openFormModal={triggerOpenModal === 'addCategory'}
+            onModalOpenHandled={resetTriggerModal}
+          />
+        );
       case 'orders':
         return <OrdersManagement />;
       case 'customers':
         return <CustomersManagement />;
       case 'admins':
-        return <AdminManagement openFormModal={triggerOpenModal === 'addAdmin'} onModalOpenHandled={resetTriggerModal} />;
+        return (
+          <AdminManagement
+            openFormModal={triggerOpenModal === 'addAdmin'}
+            onModalOpenHandled={resetTriggerModal}
+          />
+        );
       default:
         return <AdminDashboard setCurrentView={handleSetCurrentView} />;
     }
   };
 
-  if (!profile && !dataContextLoading && !appContentLoading && initialLoadComplete) {
+  // Control de acceso si no es admin
+  if (profile && profile.role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 text-center">
         <div className="bg-white p-8 rounded-lg shadow-xl">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Acceso Interrumpido</h1>
-          <p className="text-gray-700">No se pudo cargar tu perfil de administrador. Por favor, intenta recargar la página o vuelve a iniciar sesión.</p>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Acceso Denegado</h1>
+          <p className="text-gray-700">
+            No tienes permisos para acceder a esta sección.
+          </p>
         </div>
       </div>
     );
   }
-  
-  if (profile && profile.role !== 'admin' && !appContentLoading && initialLoadComplete) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 text-center">
-         <div className="bg-white p-8 rounded-lg shadow-xl">
-           <h1 className="text-2xl font-bold text-red-600 mb-4">Acceso Denegado</h1>
-           <p className="text-gray-700">No tienes permisos para acceder a esta sección.</p>
-        </div>
-      </div>
-    );
-  }
-  
+
   const sidebarUser = profile || user;
 
   return (
     <div className="min-h-screen flex bg-gray-100">
       <AdminSidebar
-        user={sidebarUser} 
+        user={sidebarUser}
         logout={logout}
         menuItems={menuItems}
         currentView={currentView}

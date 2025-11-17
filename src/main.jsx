@@ -1,13 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from '@/App';
-import '@/index.css';
-import { BrowserRouter as Router } from 'react-router-dom';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+import { BrowserRouter as Router } from 'react-router-dom'
+import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from '@/contexts/AuthContext'
+import { DataProvider } from '@/contexts/DataContext'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Router>
-      <App />
-    </Router>
-  </React.StrictMode>
-);
+  // Quitamos StrictMode para evitar montajes dobles mientras depuramos
+  <Router>
+    <AuthProvider>
+      <DataProvider>
+        <App />
+        <Toaster />
+      </DataProvider>
+    </AuthProvider>
+  </Router>,
+)
